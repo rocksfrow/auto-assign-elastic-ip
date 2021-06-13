@@ -16,12 +16,12 @@ aws_get_instance_region() {
 }
 
 aws_get_instance_environment() {
-	instance_environment=$(aws ec2 describe-tags --region $instance_region --filters "Name=resource-id,Values=$1" "Name=key,Values=Environment" --query "Tags[*].Value" --output text)
+	instance_environment=$(aws ec2 describe-tags --region $instance_region --filters "Name=resource-id,Values=$1" "Name=key,Values=$tag_name" --query "Tags[*].Value" --output text)
 	if [ -n "$instance_environment" ]; then return 0; else return 1; fi
 }
 
 aws_get_unassigned_eips() {
-	local describe_addreses_response=$(aws ec2 describe-addresses --region $instance_region --filters "Name=tag:Environment,Values=$instance_environment" --query "Addresses[?AssociationId==null].AllocationId" --output text)
+	local describe_addreses_response=$(aws ec2 describe-addresses --region $instance_region --filters "Name=tag:$tag_name,Values=$instance_environment" --query "Addresses[?AssociationId==null].AllocationId" --output text)
 	eips=(${describe_addreses_response///})
 	if [ -n "$describe_addreses_response" ]; then return 0; else return 1; fi
 }
@@ -71,6 +71,11 @@ try_to_assign() {
 }
 
 main() {
+	tag_name=$1
+	if ! tag_name; then
+	  tag_name="Environment"
+	fi
+	
 	echo "Assigning Elastic IP..."
 	local end_time=$((SECONDS+TIMEOUT))
 	echo "Timeout: ${end_time}"
@@ -92,6 +97,7 @@ main() {
 	exit 1
 }
 
+declare tag_name
 declare instance_id
 declare instance_region
 declare instance_environment
