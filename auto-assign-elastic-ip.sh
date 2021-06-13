@@ -71,10 +71,11 @@ try_to_assign() {
 }
 
 main() {
-	tag_name=$1
-	if ! tag_name; then
-	  tag_name="Environment"
-	fi
+
+        tag_name=$1
+        if [[ $tag_name == "" ]]; then
+          tag_name="Environment"
+        fi
 	
 	echo "Assigning Elastic IP..."
 	local end_time=$((SECONDS+TIMEOUT))
